@@ -16,5 +16,4 @@ jobs:
 
       - name: Set and check environment variable for testing
         run: |
-          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ vars.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" >> $GITHUB_ENV
-          echo "The value of dev_TECHBD_UDI_DS_READER_JDBC_USERNAME is: $dev_TECHBD_UDI_DS_READER_JDBC_USERNAME"
+          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ vars.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" 

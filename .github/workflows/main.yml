@@ -14,12 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set environment variable for testing
+      - name: Set and check environment variable for testing
         run: |
-          echo "Setting up test environment variable"
-        env:
-          dev_TECHBD_UDI_DS_READER_JDBC_USERNAME: "dev_${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
-
-      - name: Check if environment variable is set correctly
-        run: |
+          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" >> $GITHUB_ENV
           echo "The value of dev_TECHBD_UDI_DS_READER_JDBC_USERNAME is: $dev_TECHBD_UDI_DS_READER_JDBC_USERNAME"

@@ -1,0 +1,25 @@
+name: Test dev_ prefix for secret
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Polyglot Prime Tag Version'
+        required: true
+
+jobs:
+  test-step:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set environment variable for testing
+        run: |
+          echo "Setting up test environment variable"
+        env:
+          dev_TECHBD_UDI_DS_READER_JDBC_USERNAME: "dev_${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
+
+      - name: Check if environment variable is set correctly
+        run: |
+          echo "The value of dev_TECHBD_UDI_DS_READER_JDBC_USERNAME is: $dev_TECHBD_UDI_DS_READER_JDBC_USERNAME"

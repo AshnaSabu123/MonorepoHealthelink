@@ -19,12 +19,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Install Deno
-      - name: Install Deno
+      - name: Clone SQL Aide repository
         run: |
-          curl -fsSL https://deno.land/x/install/install.sh | sh
-          echo "$HOME/.deno/bin" >> $GITHUB_PATH
+          git clone --branch ${{ env.SQL_AIDE_TAG }} https://github.com/netspective-labs/sql-aide.git
 
+      - name: Navigate to SQL Aide and Generate ISLM SQL
+        run: |
+          deno add npm:json5
+          cd sql-aide/lib/postgres/islm
+          chmod +x islmctl.ts
+          ./islmctl.ts evolve up --conn-id DEVL_TECHBD_UDI_DS
+
+      - name: Run ISLM test
+        run: |
+          cd sql-aide/lib/postgres/islm
+          ./islmctl.ts evolve test --conn-id DEVL_TECHBD_UDI_DS
+
+      - name: Display ISLM Test log
+        run: |
+          cd sql-aide/lib/postgres/islm
+          log_file=$(ls -t ./islmctl-test-*.log | head -n 1)
+          cat "$log_file"
 
       - name: Clone Polyglot Prime repository
         run: |

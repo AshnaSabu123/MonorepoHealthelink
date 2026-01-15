@@ -15,5 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set and check environment variable for testing
-        run: |
+       run: |
+        env:
+          SPRING_PROFILES_ACTIVE: devl
           echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ vars.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" 

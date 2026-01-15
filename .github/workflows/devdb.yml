@@ -19,6 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install Deno
+      - name: Install Deno
+        run: |
+          curl -fsSL https://deno.land/x/install/install.sh | sh
+          echo "$HOME/.deno/bin" >> $GITHUB_PATH
+
+
       - name: Clone Polyglot Prime repository
         run: |
           git clone  https://github.com/anoopvarma-2000-p/polyglot-prime.git

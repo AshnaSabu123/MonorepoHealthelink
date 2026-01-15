@@ -10,12 +10,21 @@ on:
 jobs:
   test-step:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set and check environment variable for testing
-       run: |
+        run: |
+          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" >> $GITHUB_ENV
+          echo "SPRING_PROFILES_ACTIVE=devl" >> $GITHUB_ENV
+          echo "SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILES_ACTIVE }}"
         env:
           SPRING_PROFILES_ACTIVE: devl
-          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ vars.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" 
+
+      - name: Verify environment variables
+        run: |
+          echo "Checking environment variables:"
+          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=${{ env.dev_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
+          echo "SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILES_ACTIVE }}"

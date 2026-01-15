@@ -21,7 +21,7 @@ jobs:
 
       - name: Clone Polyglot Prime repository
         run: |
-          git clone -b ${{ inputs.tag }} https://github.com/anoopvarma-2000-p/polyglot-prime.git
+          git clone  https://github.com/anoopvarma-2000-p/polyglot-prime.git
 
       - name: Set and check environment variable for testing
         run: |

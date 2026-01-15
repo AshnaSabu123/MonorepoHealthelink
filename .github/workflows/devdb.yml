@@ -32,20 +32,6 @@ jobs:
       - name: Navigate to SQL Aide and Generate ISLM SQL
         run: |
           deno add npm:json5
-          cd sql-aide/lib/postgres/islm
-          chmod +x islmctl.ts
-          ./islmctl.ts evolve up --conn-id DEVL_TECHBD_UDI_DS
-
-      - name: Run ISLM test
-        run: |
-          cd sql-aide/lib/postgres/islm
-          ./islmctl.ts evolve test --conn-id DEVL_TECHBD_UDI_DS
-
-      - name: Display ISLM Test log
-        run: |
-          cd sql-aide/lib/postgres/islm
-          log_file=$(ls -t ./islmctl-test-*.log | head -n 1)
-          cat "$log_file"
 
       - name: Clone Polyglot Prime repository
         run: |

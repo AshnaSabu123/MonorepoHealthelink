@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SQL_AIDE_TAG: v0.14.9
+
     steps:
       - name: Running schema generation
         run: echo "Running schema generation"
@@ -23,29 +24,27 @@ jobs:
         run: |
           curl -fsSL https://deno.land/x/install/install.sh | sh
           echo "$HOME/.deno/bin" >> $GITHUB_PATH
-    
 
       - name: Clone Polyglot Prime repository
         run: |
-          git clone  https://github.com/anoopvarma-2000-p/polyglot-prime.git
+          git clone https://github.com/anoopvarma-2000-p/polyglot-prime.git
 
-      - name: Configure Deno npm dependencies (json5) for CI
+      # --------------------------------------------------
+      # Fix npm:json5 & node_modules for sql-aide
+      # --------------------------------------------------
+      - name: Configure Deno npm dependencies
         run: |
           cd polyglot-prime/udi-prime
 
-          # Ensure Deno will auto-create node_modules for npm: imports
-          # (uses a small Node script since node is available on ubuntu-latest)
+          # Enable node_modules auto creation
           if [ -f deno.json ]; then
             node -e '
-              const fs = require("fs");
-              const p = "deno.json";
-              const j = JSON.parse(fs.readFileSync(p,"utf8"));
-              j.nodeModulesDir = "auto";
-              fs.writeFileSync(p, JSON.stringify(j, null, 2));
+              const fs=require("fs");
+              const p="deno.json";
+              const j=JSON.parse(fs.readFileSync(p,"utf8"));
+              j.nodeModulesDir="auto";
+              fs.writeFileSync(p, JSON.stringify(j,null,2));
             '
-          elif [ -f deno.jsonc ]; then
-            echo "deno.jsonc detected. Please add: \"nodeModulesDir\": \"auto\""
-            exit 1
           else
             cat > deno.json <<'EOF'
           {
@@ -54,16 +53,16 @@ jobs:
           EOF
           fi
 
-          # Provide json5 for npm:json5
+          # Ensure npm:json5 is available
           if [ -f package.json ]; then
             node -e '
-              const fs = require("fs");
-              const p = "package.json";
-              const j = JSON.parse(fs.readFileSync(p,"utf8"));
-              j.private = true;
-              j.dependencies = j.dependencies || {};
-              j.dependencies.json5 = j.dependencies.json5 || "^2.2.3";
-              fs.writeFileSync(p, JSON.stringify(j, null, 2));
+              const fs=require("fs");
+              const p="package.json";
+              const j=JSON.parse(fs.readFileSync(p,"utf8"));
+              j.private=true;
+              j.dependencies=j.dependencies||{};
+              j.dependencies.json5=j.dependencies.json5||"^2.2.3";
+              fs.writeFileSync(p, JSON.stringify(j,null,2));
             '
           else
             cat > package.json <<'EOF'
@@ -79,50 +78,50 @@ jobs:
 
           deno install
 
-      - name: Navigate to UDI Prime and Generate SQL
+      # --------------------------------------------------
+      # UDI pipeline
+      # --------------------------------------------------
+      - name: Generate SQL
         run: |
           cd polyglot-prime/udi-prime
           ./udictl.ts ic generate sql
-      - name: Load SQL into database
+
+      - name: Load SQL
         run: |
           cd polyglot-prime/udi-prime
           ./udictl.ts ic load-sql --conn-id DEVL_TECHBD_UDI_DS
-      - name: Display Load SQL log
+
+      - name: Show Load SQL log
         run: |
           cd polyglot-prime/udi-prime
-          log_file=$(ls -t ./udictl-load-sql-*.log | head -n 1)
-          cat "$log_file"
-      - name: Run UDI test
+          cat $(ls -t ./udictl-load-sql-*.log | head -n 1)
+
+      - name: Run UDI tests
         run: |
           cd polyglot-prime/udi-prime
           ./udictl.ts ic test --conn-id DEVL_TECHBD_UDI_DS
-      - name: Run UDI Migrations
+
+      - name: Run UDI migrations
         run: |
           cd polyglot-prime/udi-prime
           ./udictl.ts ic migrate --conn-id DEVL_TECHBD_UDI_DS --is-linted false
-      - name: Display UDI Test log
+
+      - name: Show UDI test log
         run: |
           cd polyglot-prime/udi-prime
-          log_file=$(ls -t ./udictl-test-*.log | head -n 1)
-          cat "$log_file"
-      - name: Run migration
-        run: |
-          cd polyglot-prime/udi-prime/src/main/postgres/ingestion-center/migrations
-          deno run --allow-env --allow-read migrate-basic-infrastructure.ts
-        env:
-            SPRING_PROFILES_ACTIVE: devl
-            devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: "${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
+          cat $(ls -t ./udictl-test-*.log | head -n 1)
 
-      - name: Set and check environment variable for testing
-        run: |
-          echo "SPRING_PROFILES_ACTIVE=devl" >> $GITHUB_ENV
-        env:
-          SPRING_PROFILES_ACTIVE: devl
-          
-      - name: Run migration
+      # --------------------------------------------------
+      # Database migration with proper env + Deno perms
+      # --------------------------------------------------
+      - name: Run DB infrastructure migration
         run: |
           cd polyglot-prime/udi-prime/src/main/postgres/ingestion-center/migrations
-          deno run --allow-env --allow-read migrate-basic-infrastructure.ts
+          echo "SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE"
+          deno run \
+            --allow-read \
+            --allow-env=SPRING_PROFILES_ACTIVE,devl_TECHBD_UDI_DS_READER_JDBC_USERNAME \
+            migrate-basic-infrastructure.ts
         env:
           SPRING_PROFILES_ACTIVE: devl
-          devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: "${{ vars.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
+          devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: ${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}

@@ -35,11 +35,6 @@ jobs:
           echo "SPRING_PROFILES_ACTIVE=devl" >> $GITHUB_ENV
         env:
           SPRING_PROFILES_ACTIVE: devl
-
-      - name: Verify environment variables
-        run: |
-          echo "Checking environment variables:"
-          echo "devl_TECHBD_UDI_DS_READER_JDBC_USERNAME=${{ env.devl_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
           
       - name: Run migration
         run: |

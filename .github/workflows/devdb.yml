@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SQL_AIDE_TAG: v0.14.9
+      SPRING_PROFILES_ACTIVE: devl
+      devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: ${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}
 
     steps:
       - name: Running schema generation
@@ -122,6 +124,4 @@ jobs:
             --allow-read \
             --allow-env=SPRING_PROFILES_ACTIVE,devl_TECHBD_UDI_DS_READER_JDBC_USERNAME \
             migrate-basic-infrastructure.ts
-        env:
-          SPRING_PROFILES_ACTIVE: devl
-          devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: ${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}
+       

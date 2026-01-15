@@ -42,4 +42,4 @@ jobs:
           deno run --allow-env --allow-read migrate-basic-infrastructure.ts
         env:
           SPRING_PROFILES_ACTIVE: devl
-          devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: "${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
+          devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: "${{ vars.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"

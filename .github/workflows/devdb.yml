@@ -29,9 +29,7 @@ jobs:
         run: |
           git clone --branch ${{ env.SQL_AIDE_TAG }} https://github.com/netspective-labs/sql-aide.git
 
-      - name: Navigate to SQL Aide and Generate ISLM SQL
-        run: |
-          deno add npm:json5
+    
 
       - name: Clone Polyglot Prime repository
         run: |

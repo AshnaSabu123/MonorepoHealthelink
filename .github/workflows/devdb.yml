@@ -1,0 +1,110 @@
+name: Synthetic Devl UDI schema generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Polyglot Prime Tag Version'
+        required: true
+jobs:
+  schema-generation:
+    runs-on: synthetic-devl-udi-sql
+    env:
+      SQL_AIDE_TAG: v0.14.9
+    steps:
+      - name: Running schema generation
+        run: echo "Running schema generation"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create .pgpass file
+        run: |
+          # Write the metadata comment to the .pgpass file
+          echo "# { id: \"DEVL_TECHBD_UDI_DS\", description: \"UDI Devl database \", boundary: \"Devl\" }" > ~/.pgpass
+
+          # Append the database connection details to the .pgpass file
+          echo "${{ vars.DEVL_TECHBD_UDI_DS_PRIME_HOST }}:${{ vars.DEVL_TECHBD_UDI_DS_PRIME_PORT }}:${{ vars.DEVL_TECHBD_UDI_DS_PRIME_DATABASE }}:${{ secrets.DEVL_TECHBD_UDI_DS_PRIME_JDBC_USERNAME }}:${{ secrets.DEVL_TECHBD_UDI_DS_PRIME_JDBC_PASSWORD }}" >> ~/.pgpass
+
+          # Set the .pgpass file permissions to 600 (read and write for owner only)
+          chmod 600 ~/.pgpass
+
+      - name: Clone SQL Aide repository
+        run: |
+          git clone --branch ${{ env.SQL_AIDE_TAG }} https://github.com/netspective-labs/sql-aide.git
+
+      - name: Navigate to SQL Aide and Generate ISLM SQL
+        run: |
+          deno add npm:json5
+          cd sql-aide/lib/postgres/islm
+          chmod +x islmctl.ts
+          ./islmctl.ts evolve up --conn-id DEVL_TECHBD_UDI_DS
+
+      - name: Run ISLM test
+        run: |
+          cd sql-aide/lib/postgres/islm
+          ./islmctl.ts evolve test --conn-id DEVL_TECHBD_UDI_DS
+
+      - name: Display ISLM Test log
+        run: |
+          cd sql-aide/lib/postgres/islm
+          log_file=$(ls -t ./islmctl-test-*.log | head -n 1)
+          cat "$log_file"
+
+      - name: Clone Polyglot Prime repository
+        run: |
+          git clone -b ${{ inputs.tag }} https://github.com/anoopvarma-2000-p/polyglot-prime.git
+
+      - name: Navigate to UDI Prime and Generate SQL
+        run: |
+          cd polyglot-prime/udi-prime
+          ./udictl.ts ic generate sql
+
+      - name: Load SQL into database
+        run: |
+          cd polyglot-prime/udi-prime
+          ./udictl.ts ic load-sql --conn-id DEVL_TECHBD_UDI_DS
+
+      - name: Display Load SQL log
+        run: |
+          cd polyglot-prime/udi-prime
+          log_file=$(ls -t ./udictl-load-sql-*.log | head -n 1)
+          cat "$log_file"
+
+      - name: Run UDI test
+        run: |
+          cd polyglot-prime/udi-prime
+          ./udictl.ts ic test --conn-id DEVL_TECHBD_UDI_DS
+
+      - name: Run UDI Migrations
+        run: |
+          cd polyglot-prime/udi-prime
+          ./udictl.ts ic migrate --conn-id DEVL_TECHBD_UDI_DS --is-linted false
+
+      - name: Display UDI Test log
+        run: |
+          cd polyglot-prime/udi-prime
+          log_file=$(ls -t ./udictl-test-*.log | head -n 1)
+          cat "$log_file"
+
+       - name: Set and check environment variable for testing
+        run: |
+          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" >> $GITHUB_ENV
+          echo "SPRING_PROFILES_ACTIVE=devl" >> $GITHUB_ENV
+          echo "SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILES_ACTIVE }}"
+        env:
+          SPRING_PROFILES_ACTIVE: devl
+
+      - name: Verify environment variables
+        run: |
+          echo "Checking environment variables:"
+          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=${{ env.dev_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
+          echo "SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILES_ACTIVE }}"
+
+      - name: Run migration
+        run: |
+          cd polyglot-prime/udi-prime/src/main/postgres/ingestion-center/migrations
+          deno run --allow-env --allow-read migrate-basic-infrastructure.ts
+        env:
+          SPRING_PROFILES_ACTIVE: devl
+          devl_TECHBD_UDI_DS_READER_JDBC_USERNAME: "${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"

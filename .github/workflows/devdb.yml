@@ -32,18 +32,15 @@ jobs:
 
       - name: Set and check environment variable for testing
         run: |
-          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=dev_${{ secrets.DEVL_TECHBD_UDI_DS_READER_JDBC_USERNAME }}" >> $GITHUB_ENV
           echo "SPRING_PROFILES_ACTIVE=devl" >> $GITHUB_ENV
-          echo "SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILES_ACTIVE }}"
         env:
           SPRING_PROFILES_ACTIVE: devl
 
       - name: Verify environment variables
         run: |
           echo "Checking environment variables:"
-          echo "dev_TECHBD_UDI_DS_READER_JDBC_USERNAME=${{ env.dev_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
-          echo "SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILES_ACTIVE }}"
-
+          echo "devl_TECHBD_UDI_DS_READER_JDBC_USERNAME=${{ env.devl_TECHBD_UDI_DS_READER_JDBC_USERNAME }}"
+          
       - name: Run migration
         run: |
           cd polyglot-prime/udi-prime/src/main/postgres/ingestion-center/migrations

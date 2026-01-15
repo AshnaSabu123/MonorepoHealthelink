@@ -19,6 +19,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Deno
+        run: |
+          curl -fsSL https://deno.land/x/install/install.sh | sh
+          echo "$HOME/.deno/bin" >> $GITHUB_PATH
+
+
       - name: Clone SQL Aide repository
         run: |
           git clone --branch ${{ env.SQL_AIDE_TAG }} https://github.com/netspective-labs/sql-aide.git
